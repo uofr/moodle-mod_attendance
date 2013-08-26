@@ -123,7 +123,12 @@ $string['includenottaken'] = 'Include not taken sessions';
 $string['indetail'] = 'In detail...';
 $string['jumpto'] = 'Jump to';
 $string['modulename'] = 'Attendance';
-$string['modulenameplural'] = 'Attendances';
+$string['modulenameplural'] = 'Attendance';
+$string['modulename_help'] = 'The Attendance module and block are designed to allow instructors to keep an attendance log of the students in their course. Once you have setup the frequency of your classes (days per week & length of course) the attendance module is ready for use. 
+    
+To record attendance look for the "Update Attendance" link. All students in the course will be listed, along with 4 options: Present, Absent, Late & Excused, with a textfield for notes. Instructors can download the attendance data in Excel or text-based format.
+
+Only the instructor can update the attendance data. Students are able to see their own attendance record, but aren\'t able to make any changes.';
 $string['months'] = 'Months';
 $string['myvariables'] = 'My Variables';
 $string['newdate'] = 'New date';
