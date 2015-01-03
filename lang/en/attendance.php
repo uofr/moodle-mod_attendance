@@ -114,10 +114,9 @@ For example, if you have earned 8 of 10 points to date (80% attendance) and atte
 $string['gridcolumns'] = 'Grid columns';
 $string['groupsession'] = 'Group';
 $string['hiddensessions'] = 'Hidden sessions';
-$string['hiddensessions_help'] = '
-Session hides if course\'s start date older than its date. Change start date of course and hidden sessions will be shown.
+$string['hiddensessions_help'] = 'Sessions are hidden if they are scheduled before the course start date.
 
-You can use this feature to hide older sessions instead delete. Remember than only visible sessions using in Gradebook.';
+You can use this feature to hide older sessions instead of deleting them. Only visible sessions will appear in the Gradebook.';
 $string['identifyby'] = 'Identify student by';
 $string['includeall'] = 'Select all sessions';
 $string['includenottaken'] = 'Include not taken sessions';
@@ -216,3 +215,11 @@ $string['viewmode'] = 'View mode';
 $string['week'] = 'week(s)';
 $string['weeks'] = 'Weeks';
 $string['youcantdo'] = 'You can\'t do anything';
+// New strings.
+$string['studentscanmark'] = 'Allow students to record own attendance';
+$string['studentscanmark_help'] = 'If checked students will be able to change their own attendance status for the session.';
+$string['set_by_student'] = 'Self-recorded';
+$string['attendance_already_submitted'] = 'You may not self register attendance that has already been set.';
+$string['lowgrade'] = 'Low grade';
+$string['submitattendance'] = 'Submit attendance';
+$string['attendancenotset'] = 'You must set your attendance';
