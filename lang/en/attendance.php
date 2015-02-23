@@ -153,7 +153,7 @@ $string['olddate'] = 'Old date';
 $string['period'] = 'Frequency';
 $string['pluginname'] = 'Attendance';
 $string['pluginadministration'] = 'Attendance administration';
-$string['remark'] = 'Remark for: {a}';
+$string['remark'] = 'Remark for: {$a}';
 $string['remarks'] = 'Remarks';
 $string['report'] = 'Report';
 $string['required'] = 'Required*';
@@ -215,7 +215,17 @@ $string['viewmode'] = 'View mode';
 $string['week'] = 'week(s)';
 $string['weeks'] = 'Weeks';
 $string['youcantdo'] = 'You can\'t do anything';
-// New strings.
+
+$string['eventreportviewed'] = 'Attendance report viewed';
+$string['eventsessionadded'] = 'Session added';
+$string['eventsessionupdated'] = 'Session updated';
+$string['eventtaken'] = 'Attendance taken';
+$string['eventtakenbystudent'] = 'Attendance taken by student';
+$string['eventsessiondeleted'] = 'Session deleted';
+$string['eventdurationupdated'] = 'Session duration updated';
+$string['eventstatusupdated'] = 'Status updated';
+$string['eventstatusadded'] = 'Status added';
+
 $string['studentscanmark'] = 'Allow students to record own attendance';
 $string['studentscanmark_help'] = 'If checked students will be able to change their own attendance status for the session.';
 $string['set_by_student'] = 'Self-recorded';
@@ -223,3 +233,4 @@ $string['attendance_already_submitted'] = 'You may not self register attendance 
 $string['lowgrade'] = 'Low grade';
 $string['submitattendance'] = 'Submit attendance';
 $string['attendancenotset'] = 'You must set your attendance';
+$string['export'] = 'Export';

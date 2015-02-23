@@ -34,7 +34,19 @@ function xmldb_attendance_upgrade($oldversion=0) {
 
     $result = true;
 
-    if ($oldversion < 2013082902) {
+    if ($oldversion < 2014112000) {
+        $table = new xmldb_table('attendance_sessions');
+
+        $field = new xmldb_field('studentscanmark');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        
+        upgrade_mod_savepoint($result, 2014112000, 'attendance');
+    }
+
+    if ($oldversion < 2014112001) {
         // Replace values that reference old module "attforblock" to "attendance".
         $sql = "UPDATE {grade_items}
                    SET itemmodule = 'attendance'
@@ -70,7 +82,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
         // Delete old capabilities.
         $DB->delete_records_select('capabilities', 'component = ?', array('mod_attforblock'));
 
-        upgrade_plugin_savepoint($result, 2013082902, 'mod', 'attendance');
+        upgrade_plugin_savepoint($result, 2014112001, 'mod', 'attendance');
     }
 
     if ($oldversion < 2014022803) {

@@ -85,7 +85,7 @@ class attendance_tabs implements renderable {
 
         if ($this->att->perm->can_export()) {
             $toprow[] = new tabobject(self::TAB_EXPORT, $this->att->url_export()->out(),
-                        get_string('export', 'quiz'));
+                        get_string('export', 'attendance'));
         }
 
         if ($this->att->perm->can_change_preferences()) {
@@ -353,7 +353,7 @@ class attendance_user_data implements renderable {
     private $urlparams;
 
     public function  __construct(attendance $att, $userid) {
-        global $CFG;
+        global $CFG, $USER;
 
         $this->user = $att->get_user($userid);
 
@@ -381,13 +381,17 @@ class attendance_user_data implements renderable {
             $this->groups = groups_get_all_groups($att->course->id);
         } else {
             $this->coursesatts = att_get_user_courses_attendances($userid);
-
             $this->statuses = array();
             $this->stat = array();
             $this->gradable = array();
             $this->grade = array();
             $this->maxgrade = array();
-            foreach ($this->coursesatts as $ca) {
+            foreach ($this->coursesatts as $atid => $ca) {
+                // Check to make sure the user can view this cm.
+                if (!get_fast_modinfo($ca->courseid)->instances['attendance'][$ca->attid]->uservisible) {
+                    unset($this->courseatts[$atid]);
+                    continue;
+                }
                 $statuses = att_get_statuses($ca->attid);
                 $user_taken_sessions_count = att_get_user_taken_sessions_count($ca->attid, $ca->coursestartdate, $userid, $att->cm);
                 $user_statuses_stat = att_get_user_statuses_stat($ca->attid, $ca->coursestartdate, $userid, $att->cm);
@@ -414,7 +418,6 @@ class attendance_user_data implements renderable {
                 }
             }
         }
-
         $this->urlpath = $att->url_view()->out_omit_querystring();
         $params = $att->pageparams->get_significant_params();
         $params['id'] = $att->cm->id;
@@ -472,7 +475,7 @@ class attendance_report_data implements renderable {
 
         $this->groups = groups_get_all_groups($att->course->id);
 
-        $this->sessions = $att->get_filtered_sessions();
+        $this->sessions = $att->get_filtered_sessions(false);
 
         $this->statuses = $att->get_statuses();
         $this->allstatuses = $att->get_statuses(false);

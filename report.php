@@ -38,12 +38,12 @@ $pageparams->perpage    = get_config('attendance', 'resultsperpage');
 
 $cm             = get_coursemodule_from_id('attendance', $id, 0, false, MUST_EXIST);
 $course         = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-$att            = $DB->get_record('attendance', array('id' => $cm->instance), '*', MUST_EXIST);
+$attrecord = $DB->get_record('attendance', array('id' => $cm->instance), '*', MUST_EXIST);
 
 require_login($course, true, $cm);
 
 $pageparams->init($cm);
-$att = new attendance($att, $cm, $course, $PAGE->context, $pageparams);
+$att = new attendance($attrecord, $cm, $course, $PAGE->context, $pageparams);
 
 $att->perm->require_view_reports_capability();
 
@@ -60,7 +60,15 @@ $tabs = new attendance_tabs($att, attendance_tabs::TAB_REPORT);
 $filtercontrols = new attendance_filter_controls($att, true);
 $reportdata = new attendance_report_data($att);
 
-add_to_log($course->id, 'attendance', 'report viewed', '/mod/attendance/report.php?id='.$id, '', $cm->id);
+// Trigger a report viewed event.
+$event = \mod_attendance\event\report_viewed::create(array(
+    'objectid' => $att->id,
+    'context' => $PAGE->context,
+    'other' => array()
+));
+$event->add_record_snapshot('course_modules', $cm);
+$event->add_record_snapshot('attendance', $attrecord);
+$event->trigger();
 
 // Output starts here.
 
