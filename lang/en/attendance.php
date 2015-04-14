@@ -126,11 +126,13 @@ $string['invalidsessionenddate'] = 'The session end date can not be earlier than
 $string['jumpto'] = 'Jump to';
 $string['modulename'] = 'Attendance';
 $string['modulenameplural'] = 'Attendance';
-$string['modulename_help'] = 'The Attendance module and block are designed to allow instructors to keep an attendance log of the students in their course. Once you have setup the frequency of your classes (days per week & length of course) the attendance module is ready for use. 
+$string['modulename_help'] = 'The Attendance module is designed to allow instructors to keep an attendance log of the students in their course. Once you have setup the frequency of your classes (days per week &amp; length of course) the attendance module is ready for use. 
     
-To record attendance look for the "Update Attendance" link. All students in the course will be listed, along with 4 options: Present, Absent, Late & Excused, with a textfield for notes. Instructors can download the attendance data in Excel or text-based format.
+To record attendance look for the "Update Attendance" link. All students in the course will be listed with 4 options: Present, Absent, Late &amp; Excused, along with a textfield for notes. Instructors can download the attendance data in an Excel or text-based format.
 
-Only the instructor can update the attendance data. Students are able to see their own attendance record, but aren\'t able to make any changes.';
+Students are able to see their own attendance report within the course unless you opt to hide or restrict access to the activity. If the Attendance instance has been configured to allow it, students are able to record their own attendance themselves, but this is not the default behaviour.
+
+For more information, please refer to the <a href="https://urcourses.uregina.ca/guides/instructor/index.html#attendance" target="_blank">UR Courses Instructor Guide</a>.';
 $string['months'] = 'Months';
 $string['moreattendance'] = 'Attendance has been successfully taken for this page';
 $string['myvariables'] = 'My Variables';
