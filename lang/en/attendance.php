@@ -123,6 +123,7 @@ $string['includenottaken'] = 'Include not taken sessions';
 $string['includeremarks'] = 'Include remarks';
 $string['indetail'] = 'In detail...';
 $string['invalidsessionenddate'] = 'The session end date can not be earlier than the session start date';
+$string['invalidaction'] = 'You must select an action';
 $string['jumpto'] = 'Jump to';
 $string['modulename'] = 'Attendance';
 $string['modulenameplural'] = 'Attendance';
