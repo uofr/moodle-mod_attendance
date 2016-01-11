@@ -57,7 +57,7 @@ $PAGE->set_cacheable(true);
 $PAGE->set_button($OUTPUT->update_module_button($cm->id, 'attendance'));
 $PAGE->navbar->add($att->name);
 
-$formparams = array('course' => $course, 'cm' => $cm, 'modcontext' => $PAGE->context);
+$formparams = array('course' => $course, 'cm' => $cm, 'modcontext' => $PAGE->context, 'att' => $att);
 switch ($att->pageparams->action) {
     case att_sessions_page_params::ACTION_ADD:
         $url = $att->url_sessions(array('action' => att_sessions_page_params::ACTION_ADD));
@@ -126,8 +126,10 @@ switch ($att->pageparams->action) {
             }
             redirect($att->url_manage(), get_string('sessiondeleted', 'attendance'));
         }
-        $sessid = required_param_array('sessid', PARAM_SEQUENCE);
-
+        $sessid = optional_param_array('sessid', '', PARAM_SEQUENCE);
+        if (empty($sessid)) {
+            print_error('nosessionsselected', 'attendance', $att->url_manage());
+        }
         $sessionsinfo = $att->get_sessions_info($sessid);
 
         $message = get_string('deletecheckfull', '', get_string('session', 'attendance'));
@@ -230,6 +232,7 @@ function construct_sessions_data_for_add($formdata) {
                     if (isset($formdata->studentscanmark)) { // Students will be able to mark their own attendance.
                         $sess->studentscanmark = 1;
                     }
+                    $sess->statusset = $formdata->statusset;
 
                     fill_groupid($formdata, $sessions, $sess);
                 }
@@ -250,6 +253,7 @@ function construct_sessions_data_for_add($formdata) {
         if (isset($formdata->studentscanmark)) { // Students will be able to mark their own attendance.
             $sess->studentscanmark = 1; 
         }
+        $sess->statusset = $formdata->statusset;
 
         fill_groupid($formdata, $sessions, $sess);
     }

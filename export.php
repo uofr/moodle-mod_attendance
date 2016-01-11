@@ -50,8 +50,7 @@ $PAGE->navbar->add(get_string('export', 'attendance'));
 $formparams = array('course' => $course, 'cm' => $cm, 'modcontext' => $PAGE->context);
 $mform = new mod_attendance_export_form($att->url_export(), $formparams);
 
-if ($mform->is_submitted()) {
-    $formdata = $mform->get_data();
+if ($formdata = $mform->get_data()) {
 
     $pageparams = new att_page_with_filter_controls();
     $pageparams->init($cm);
@@ -69,6 +68,9 @@ if ($mform->is_submitted()) {
     } else {
         $pageparams->startdate = $formdata->sessionstartdate;
         $pageparams->enddate = $formdata->sessionenddate;
+    }
+    if ($formdata->selectedusers) {
+        $pageparams->userids = $formdata->users;
     }
     $att->pageparams = $pageparams;
 
@@ -110,7 +112,7 @@ if ($mform->is_submitted()) {
                 $text .= $sess->groupid ? $reportdata->groups[$sess->groupid]->name : get_string('commonsession', 'attendance');
                 $data->tabhead[] = $text;
                 if (isset($formdata->includeremarks)) {
-                    $data->tabhead[] = get_string('remark', 'attendance', $text);
+                    $data->tabhead[] = ''; // Space for the remarks.
                 }
             }
         } else {
@@ -118,6 +120,7 @@ if ($mform->is_submitted()) {
         }
         if ($reportdata->gradable) {
             $data->tabhead[] = get_string('grade');
+            $data->tabhead[] = get_string('percentage', 'attendance');
         }
 
         $i = 0;
@@ -151,7 +154,14 @@ if ($mform->is_submitted()) {
             $cellsgenerator = new user_sessions_cells_text_generator($reportdata, $user);
             $data->table[$i] = array_merge($data->table[$i], $cellsgenerator->get_cells(isset($formdata->includeremarks)));
             if ($reportdata->gradable) {
-                $data->table[$i][] = $reportdata->grades[$user->id].' / '.$reportdata->maxgrades[$user->id];
+                $data->table[$i][] = format_float($reportdata->grades[$user->id]).' / '.
+                    format_float($reportdata->maxgrades[$user->id]);
+                if ($reportdata->maxgrades[$user->id]) {
+                    $percent = $reportdata->grades[$user->id] * 100.0 / $reportdata->maxgrades[$user->id];
+                } else {
+                    $percent = 0.0;
+                }
+                $data->table[$i][] = $percent;
             }
             $i++;
         }
@@ -206,7 +216,13 @@ function exporttotableed($data, $filename, $format) {
     $i = 3;
     $j = 0;
     foreach ($data->tabhead as $cell) {
-        $myxls->write($i, $j++, $cell, $formatbc);
+        // Merge cells if the heading would be empty (remarks column).
+        if (empty($cell)) {
+            $myxls->merge_cells($i, $j - 1, $i, $j);
+        } else {
+            $myxls->write($i, $j, $cell, $formatbc);
+        }
+        $j++;
     }
     $i++;
     $j = 0;
