@@ -227,7 +227,8 @@ $string['sessionexist'] = 'Session not added (already exists)!';
 $string['sessions'] = 'Sessions';
 $string['sessionscompleted'] = 'Sessions completed';
 $string['sessionsids'] = 'IDs of sessions: ';
-$string['sessionsgenerated'] = 'Sessions successfully generated';
+$string['sessiongenerated'] = 'One session was successfully generated';
+$string['sessionsgenerated'] = '{$a} sessions were successfully generated';
 $string['sessionsnotfound'] = 'There is no sessions in the selected timespan';
 $string['sessionstartdate'] = 'Session start date';
 $string['sessiontype'] = 'Session type';
@@ -303,3 +304,13 @@ $string['lowgrade'] = 'Low grade';
 $string['submitattendance'] = 'Submit attendance';
 $string['attendancenotset'] = 'You must set your attendance';
 $string['export'] = 'Export';
+$string['points'] = 'Points';
+$string['unknowngroup'] = 'Unknown group';
+$string['notmember'] = 'not&nbsp;member';
+
+$string['deletehiddensessions'] = 'Delete all hidden sessions';
+$string['confirmdeletehiddensessions'] = 'Are you sure you want to delete {$a->count} sessions scheduled before the course start date ({$a->date})?';
+$string['hiddensessionsdeleted'] = 'All hidden sessions were delete';
+
+$string['timeahead'] = 'Multiple sessions that exceed one year cannot be created, please adjust the start and end dates.';
+$string['priorto'] = 'The session date is prior to the course start date ({$a}) so that the new sessions scheduled before this date will be hidden (not accessible). You can change the course start date at any time (see course settings) in order to have access to earlier sessions.<br><br>Please change the session date or just click the "Add session" button again to confirm?';

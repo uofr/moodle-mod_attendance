@@ -46,8 +46,8 @@ if ($action) {
 $PAGE->set_url($att->url_tempedit($params));
 
 require_login($course, true, $cm);
-
-$att->perm->require_managetemp_capability();
+$context = context_module::instance($cm->id);
+require_capability('mod/attendance:managetemporaryusers', $context);
 
 $PAGE->set_title($course->shortname.": ".$att->name.' - '.get_string('tempusersedit', 'attendance'));
 $PAGE->set_heading($course->fullname);
@@ -108,7 +108,7 @@ if ($mform->is_cancelled()) {
 $tabs = new attendance_tabs($att, attendance_tabs::TAB_TEMPORARYUSERS);
 
 echo $output->header();
-echo $output->heading(get_string('tempusersedit', 'attendance').' : '.$course->fullname);
+echo $output->heading(get_string('tempusersedit', 'attendance').' : '.format_string($course->fullname));
 echo $output->render($tabs);
 $mform->display();
 echo $output->footer($course);

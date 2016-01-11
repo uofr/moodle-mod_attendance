@@ -36,9 +36,10 @@ $att            = $DB->get_record('attendance', array('id' => $cm->instance), '*
 
 require_login($course, true, $cm);
 
-$att = new attendance($att, $cm, $course, $PAGE->context);
+$context = context_module::instance($cm->id);
+require_capability('mod/attendance:export', $context);
 
-$att->perm->require_export_capability();
+$att = new attendance($att, $cm, $course, $context);
 
 $PAGE->set_url($att->url_export());
 $PAGE->set_title($course->shortname. ": ".$att->name);
@@ -47,7 +48,7 @@ $PAGE->set_cacheable(true);
 $PAGE->set_button($OUTPUT->update_module_button($cm->id, 'attendance'));
 $PAGE->navbar->add(get_string('export', 'attendance'));
 
-$formparams = array('course' => $course, 'cm' => $cm, 'modcontext' => $PAGE->context);
+$formparams = array('course' => $course, 'cm' => $cm, 'modcontext' => $context);
 $mform = new mod_attendance_export_form($att->url_export(), $formparams);
 
 if ($formdata = $mform->get_data()) {
@@ -90,14 +91,14 @@ if ($formdata = $mform->get_data()) {
         if (isset($formdata->ident['uname'])) {
             $data->tabhead[] = get_string('username');
         }
-        
+
         $optional = array('idnumber', 'institution', 'department');
         foreach ($optional as $opt) {
             if (isset($formdata->ident[$opt])) {
                 $data->tabhead[] = get_string($opt);
             }
         }
-        
+
         $data->tabhead[] = get_string('lastname');
         $data->tabhead[] = get_string('firstname');
         $groupmode = groups_get_activity_groupmode($cm, $course);
@@ -132,14 +133,14 @@ if ($formdata = $mform->get_data()) {
             if (isset($formdata->ident['uname'])) {
                 $data->table[$i][] = $user->username;
             }
-            
-            $optional_row = array('idnumber', 'institution', 'department');
-            foreach ($optional_row as $opt) {
+
+            $optionalrow = array('idnumber', 'institution', 'department');
+            foreach ($optionalrow as $opt) {
                 if (isset($formdata->ident[$opt])) {
                     $data->table[$i][] = $user->$opt;
                 }
             }
-            
+
             $data->table[$i][] = $user->lastname;
             $data->table[$i][] = $user->firstname;
             if (!empty($groupmode)) {
@@ -180,7 +181,7 @@ if ($formdata = $mform->get_data()) {
 $output = $PAGE->get_renderer('mod_attendance');
 $tabs = new attendance_tabs($att, attendance_tabs::TAB_EXPORT);
 echo $output->header();
-echo $output->heading(get_string('attendanceforthecourse', 'attendance').' :: ' .$course->fullname);
+echo $output->heading(get_string('attendanceforthecourse', 'attendance').' :: ' .format_string($course->fullname));
 echo $output->render($tabs);
 
 $mform->display();

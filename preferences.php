@@ -38,15 +38,16 @@ $att            = $DB->get_record('attendance', array('id' => $cm->instance), '*
 
 require_login($course, true, $cm);
 
+$context = context_module::instance($cm->id);
+require_capability('mod/attendance:changepreferences', $context);
+
 // Make sure the statusset is valid.
 $maxstatusset = attendance_get_max_statusset($att->id);
 if ($pageparams->statusset > $maxstatusset + 1) {
     $pageparams->statusset = $maxstatusset + 1;
 }
 
-$att = new attendance($att, $cm, $course, $PAGE->context, $pageparams);
-
-$att->perm->require_change_preferences_capability();
+$att = new attendance($att, $cm, $course, $context, $pageparams);
 
 $PAGE->set_url($att->url_preferences());
 $PAGE->set_title($course->shortname. ": ".$att->name.' - '.get_string('settings', 'attendance'));
@@ -56,6 +57,11 @@ $PAGE->set_button($OUTPUT->update_module_button($cm->id, 'attendance'));
 $PAGE->navbar->add(get_string('settings', 'attendance'));
 
 $errors = array();
+
+// Check sesskey if we are performing an action.
+if (!empty($att->pageparams->action)) {
+    require_sesskey();
+}
 
 switch ($att->pageparams->action) {
     case att_preferences_page_params::ACTION_ADD:
@@ -89,7 +95,7 @@ switch ($att->pageparams->action) {
                     ($status->description ? $status->description : get_string('nodescription', 'attendance'));
         $params = array_merge($att->pageparams->get_significant_params(), array('confirm' => 1));
         echo $OUTPUT->header();
-        echo $OUTPUT->heading(get_string('attendanceforthecourse', 'attendance').' :: ' .$course->fullname);
+        echo $OUTPUT->heading(get_string('attendanceforthecourse', 'attendance').' :: ' .format_string($course->fullname));
         echo $OUTPUT->confirm($message, $att->url_preferences($params), $att->url_preferences());
         echo $OUTPUT->footer();
         exit;
@@ -104,8 +110,8 @@ switch ($att->pageparams->action) {
         $att->update_status($status, null, null, null, 1);
         break;
     case att_preferences_page_params::ACTION_SAVE:
-        $acronym        = required_param_array('acronym', PARAM_MULTILANG);
-        $description    = required_param_array('description', PARAM_MULTILANG);
+        $acronym        = required_param_array('acronym', PARAM_TEXT);
+        $description    = required_param_array('description', PARAM_TEXT);
         $grade          = required_param_array('grade', PARAM_RAW);
         foreach ($grade as &$val) {
             $val = unformat_float($val);
@@ -130,7 +136,7 @@ $setselector = new attendance_set_selector($att, $maxstatusset);
 // Output starts here.
 
 echo $output->header();
-echo $output->heading(get_string('attendanceforthecourse', 'attendance').' :: ' .$course->fullname);
+echo $output->heading(get_string('attendanceforthecourse', 'attendance').' :: '. format_string($course->fullname));
 echo $output->render($tabs);
 echo $output->render($setselector);
 echo $output->render($prefdata);
