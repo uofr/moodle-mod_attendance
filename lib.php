@@ -22,6 +22,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+require_once(dirname(__FILE__) . '/classes/calendar_helpers.php');
+
 /**
  * Returns the information if the module supports a feature
  *
@@ -40,7 +42,7 @@ function attendance_supports($feature) {
         case FEATURE_GROUPMEMBERSONLY:
             return true;
         case FEATURE_MOD_INTRO:
-            return false;
+            return true;
         case FEATURE_BACKUP_MOODLE2:
             return true;
         // Artem Andreev: AFAIK it's not tested.
@@ -102,6 +104,9 @@ function attendance_delete_instance($id) {
     }
 
     if ($sessids = array_keys($DB->get_records('attendance_sessions', array('attendanceid' => $id), '', 'id'))) {
+        if (attendance_existing_calendar_events_ids($sessids)) {
+            attendance_delete_calendar_events($sessids);
+        }
         $DB->delete_records_list('attendance_log', 'sessionid', $sessids);
         $DB->delete_records('attendance_sessions', array('attendanceid' => $id));
     }
@@ -119,6 +124,9 @@ function attendance_delete_course($course, $feedback=true) {
 
     $attids = array_keys($DB->get_records('attendance', array('course' => $course->id), '', 'id'));
     $sessids = array_keys($DB->get_records_list('attendance_sessions', 'attendanceid', $attids, '', 'id'));
+    if (attendance_existing_calendar_events_ids($sessids)) {
+        attendance_delete_calendar_events($sessids);
+    }
     if ($sessids) {
         $DB->delete_records_list('attendance_log', 'sessionid', $sessids);
     }
@@ -194,6 +202,10 @@ function attendance_reset_userdata($data) {
     }
 
     if (!empty($data->reset_attendance_sessions)) {
+        $sessionsids = array_keys($DB->get_records_list('attendance_sessions', 'attendanceid', $attids, '', 'id'));
+        if (attendance_existing_calendar_events_ids($sessionsids)) {
+            attendance_delete_calendar_events($sessionsids);
+        }
         $DB->delete_records_list('attendance_sessions', 'attendanceid', $attids);
 
         $status[] = array(
@@ -250,7 +262,7 @@ function attendance_user_complete($course, $user, $mod, $attendance) {
     require_once($CFG->libdir.'/gradelib.php');
 
     if (has_capability('mod/attendance:canbelisted', $mod->context, $user->id)) {
-        echo construct_full_user_stat_html_table($attendance, $course, $user, $mod);
+        echo construct_full_user_stat_html_table($attendance, $user);
     }
 }
 
@@ -276,7 +288,7 @@ function attendance_grade_item_update($attendance, $grades=null) {
     if (!isset($attendance->courseid)) {
         $attendance->courseid = $attendance->course;
     }
-    if (! $course = $DB->get_record('course', array('id' => $attendance->course))) {
+    if (!$DB->get_record('course', array('id' => $attendance->course))) {
         error("Course is misconfigured");
     }
 
@@ -284,7 +296,6 @@ function attendance_grade_item_update($attendance, $grades=null) {
         $params = array('itemname' => $attendance->name, 'idnumber' => $attendance->cmidnumber);
     } else {
         // MDL-14303.
-        $cm = get_coursemodule_from_instance('attendance', $attendance->id);
         $params = array('itemname' => $attendance->name/*, 'idnumber'=>$attendance->id*/);
     }
 
