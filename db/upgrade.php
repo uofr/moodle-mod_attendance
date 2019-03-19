@@ -513,7 +513,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
         upgrade_mod_savepoint(true, 2018050100, 'attendance');
     }
 
-    if ($oldversion < 2018051402) {
+    if ($oldversion < 2018072700) {
         $table = new xmldb_table('attendance_sessions');
         $field = new xmldb_field('calendarevent', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED,
             XMLDB_NOTNULL, null, '1', 'caleventid');
@@ -524,20 +524,20 @@ function xmldb_attendance_upgrade($oldversion=0) {
                 $DB->execute("UPDATE {attendance_sessions} set calendarevent = 0");
             }
         }
-        upgrade_mod_savepoint(true, 2018051402, 'attendance');
+        upgrade_mod_savepoint(true, 2018072700, 'attendance');
     }
 
-    if ($oldversion < 2018051404) {
+    if ($oldversion < 2018082605) {
         $table = new xmldb_table('attendance_sessions');
         $field = new xmldb_field('includeqrcode', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED,
             XMLDB_NOTNULL, null, '0', 'calendarevent');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        upgrade_mod_savepoint(true, 2018051404, 'attendance');
+        upgrade_mod_savepoint(true, 2018082605, 'attendance');
     }
 
-    if ($oldversion < 2018051408) {
+    if ($oldversion < 2019012500) {
 
         // Changing precision of field statusset on table attendance_log to (1333).
         $table = new xmldb_table('attendance_log');
@@ -547,7 +547,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
         $dbman->change_field_precision($table, $field);
 
         // Attendance savepoint reached.
-        upgrade_mod_savepoint(true, 2018051408, 'attendance');
+        upgrade_mod_savepoint(true, 2019012500, 'attendance');
     }
 
     return $result;
