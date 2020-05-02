@@ -177,12 +177,21 @@ function attendance_form_sessiondate_selector (MoodleQuickForm $mform) {
     }
 
     $sesendtime = array();
-    $sesendtime[] =& $mform->createElement('static', 'from', '', get_string('from', 'attendance'));
-    $sesendtime[] =& $mform->createElement('select', 'starthour', get_string('hour', 'form'), $hours, false, true);
-    $sesendtime[] =& $mform->createElement('select', 'startminute', get_string('minute', 'form'), $minutes, false, true);
-    $sesendtime[] =& $mform->createElement('static', 'to', '', get_string('to', 'attendance'));
-    $sesendtime[] =& $mform->createElement('select', 'endhour', get_string('hour', 'form'), $hours, false, true);
-    $sesendtime[] =& $mform->createElement('select', 'endminute', get_string('minute', 'form'), $minutes, false, true);
+    if (!right_to_left()) {
+        $sesendtime[] =& $mform->createElement('static', 'from', '', get_string('from', 'attendance'));
+        $sesendtime[] =& $mform->createElement('select', 'starthour', get_string('hour', 'form'), $hours, false, true);
+        $sesendtime[] =& $mform->createElement('select', 'startminute', get_string('minute', 'form'), $minutes, false, true);
+        $sesendtime[] =& $mform->createElement('static', 'to', '', get_string('to', 'attendance'));
+        $sesendtime[] =& $mform->createElement('select', 'endhour', get_string('hour', 'form'), $hours, false, true);
+        $sesendtime[] =& $mform->createElement('select', 'endminute', get_string('minute', 'form'), $minutes, false, true);
+    } else {
+        $sesendtime[] =& $mform->createElement('static', 'from', '', get_string('from', 'attendance'));
+        $sesendtime[] =& $mform->createElement('select', 'startminute', get_string('minute', 'form'), $minutes, false, true);
+        $sesendtime[] =& $mform->createElement('select', 'starthour', get_string('hour', 'form'), $hours, false, true);
+        $sesendtime[] =& $mform->createElement('static', 'to', '', get_string('to', 'attendance'));
+        $sesendtime[] =& $mform->createElement('select', 'endminute', get_string('minute', 'form'), $minutes, false, true);
+        $sesendtime[] =& $mform->createElement('select', 'endhour', get_string('hour', 'form'), $hours, false, true);
+    }
     $mform->addGroup($sesendtime, 'sestime', get_string('time', 'attendance'), array(' '), true);
 }
 
@@ -458,7 +467,7 @@ function attendance_can_student_mark($sess, $log = true) {
             $record = $DB->get_record_select('attendance_log', $sql, $params);
         } else {
             // Assume ATTENDANCE_SHAREDIP_FORCED.
-            $sql = 'sessionid = ? AND studentid <> ? ipaddress = ?';
+            $sql = 'sessionid = ? AND studentid <> ? AND ipaddress = ?';
             $params = array($sess->id, $USER->id, getremoteaddr());
             $record = $DB->get_record_select('attendance_log', $sql, $params);
         }
@@ -509,7 +518,7 @@ function attendance_exporttotableed($data, $filename, $format) {
     // Sending HTTP headers.
     $workbook->send($filename);
     // Creating the first worksheet.
-    $myxls = $workbook->add_worksheet('Attendances');
+    $myxls = $workbook->add_worksheet(get_string('modulenameplural', 'attendance'));
     // Format types.
     $formatbc = $workbook->add_format();
     $formatbc->set_bold(1);
@@ -1104,7 +1113,8 @@ function attendance_renderqrcode($session) {
     global $CFG;
 
     if (strlen($session->studentpassword) > 0) {
-        $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?qrpass=' . $session->studentpassword . '&sessid=' . $session->id;
+        $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?qrpass=' .
+            $session->studentpassword . '&sessid=' . $session->id;
     } else {
         $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?sessid=' . $session->id;
     }
@@ -1127,7 +1137,8 @@ function attendance_generate_passwords($session) {
     $password = array();
 
     for ($i = 0; $i < 30; $i++) {
-        array_push($password, array("attendanceid" => $session->id, "password" => mt_rand(1000, 10000), "expirytime" => time() + ($attconfig->rotateqrcodeinterval * $i)));
+        array_push($password, array("attendanceid" => $session->id,
+            "password" => mt_rand(1000, 10000), "expirytime" => time() + ($attconfig->rotateqrcodeinterval * $i)));
     }
 
     $DB->insert_records('attendance_rotate_passwords', $password);
@@ -1139,8 +1150,7 @@ function attendance_generate_passwords($session) {
  * @param stdClass $session
  */
 function attendance_renderqrcoderotate($session) {
-    echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
-    // load requered js
+    // Load required js.
     echo html_writer::tag('script', '',
         [
             'src' => 'js/qrcode/qrcode.min.js',
@@ -1153,12 +1163,17 @@ function attendance_renderqrcoderotate($session) {
             'type' => 'text/javascript'
         ]
     );
-    echo html_writer::tag('div', '', ['id' => 'qrcode']); // div to display qr code
-    // js to start the password manager
+    echo html_writer::tag('div', '', ['id' => 'rotate-time']); // Div to display timer.
+    echo html_writer::tag('h3', get_string('passwordgrp', 'attendance'));
+    echo html_writer::tag('div', '', ['id' => 'text-password']); // Div to display password.
+    echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
+    echo html_writer::tag('div', '', ['id' => 'qrcode']); // Div to display qr code.
+    // Js to start the password manager.
     echo '
     <script type="text/javascript">
         let qrCodeRotate = new attendance_QRCodeRotate();
-        qrCodeRotate.start(' . $session->id . ', document.getElementById("qrcode"));
+        qrCodeRotate.start(' . $session->id . ', document.getElementById("qrcode"), document.getElementById("text-password"),
+        document.getElementById("rotate-time"));
     </script>';
 }
 

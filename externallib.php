@@ -28,11 +28,11 @@ require_once($CFG->libdir . '/filelib.php');
 require_once(dirname(__FILE__).'/classes/attendance_webservices_handler.php');
 
 /**
- * Class mod_wsattendance_external
+ * Class mod_attendance_external
  * @copyright  2015 Caio Bressan Doneda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_wsattendance_external extends external_api {
+class mod_attendance_external extends external_api {
 
     /**
      * Describes the parameters for add_attendance.
@@ -45,7 +45,8 @@ class mod_wsattendance_external extends external_api {
                 'courseid' => new external_value(PARAM_INT, 'course id'),
                 'name' => new external_value(PARAM_TEXT, 'attendance name'),
                 'intro' => new external_value(PARAM_RAW, 'attendance description', VALUE_DEFAULT, ''),
-                'groupmode' => new external_value(PARAM_INT, 'group mode (0 - no groups, 1 - separate groups, 2 - visible groups)', VALUE_DEFAULT, 0),
+                'groupmode' => new external_value(PARAM_INT,
+                    'group mode (0 - no groups, 1 - separate groups, 2 - visible groups)', VALUE_DEFAULT, 0),
             )
         );
     }
@@ -147,16 +148,18 @@ class mod_wsattendance_external extends external_api {
         require_capability('mod/attendance:manageattendances', $context);
 
         // Delete attendance instance.
-        attendance_delete_instance($params['attendanceid']);
+        $result = attendance_delete_instance($params['attendanceid']);
         rebuild_course_cache($cm->course, true);
+        return $result;
     }
 
     /**
      * Describes remove_attendance return values.
      *
-     * @return void
+     * @return external_value
      */
     public static function remove_attendance_returns() {
+        return new external_value(PARAM_BOOL, 'attendance deletion result');
     }
 
     /**
@@ -188,7 +191,8 @@ class mod_wsattendance_external extends external_api {
      * @param bool $addcalendarevent
      * @return array
      */
-    public static function add_session(int $attendanceid, $description, int $sessiontime, int $duration, int $groupid, bool $addcalendarevent) {
+    public static function add_session(int $attendanceid, $description, int $sessiontime, int $duration, int $groupid,
+                                       bool $addcalendarevent) {
         global $USER, $DB;
 
         $params = self::validate_parameters(self::add_session_parameters(), array(
@@ -218,7 +222,7 @@ class mod_wsattendance_external extends external_api {
             throw new invalid_parameter_exception('Group id is not specified (or 0) in separate groups mode.');
         }
         if ($groupmode === SEPARATEGROUPS || ($groupmode === VISIBLEGROUPS && $groupid > 0)) {
-            // Determine valid groups
+            // Determine valid groups.
             $userid = has_capability('moodle/site:accessallgroups', $context) ? 0 : $USER->id;
             $validgroupids = array_map(function($group) {
                 return $group->id;
@@ -284,7 +288,7 @@ class mod_wsattendance_external extends external_api {
      * Delete session from attendance instance.
      *
      * @param int $sessionid
-     * @return int $sessionid
+     * @return bool
      */
     public static function remove_session(int $sessionid) {
         global $DB;
@@ -308,14 +312,17 @@ class mod_wsattendance_external extends external_api {
         // Delete session.
         $attendance->delete_sessions(array($sessionid));
         attendance_update_users_grade($attendance);
+
+        return true;
     }
 
     /**
      * Describes remove_session return values.
      *
-     * @return void
+     * @return external_value
      */
     public static function remove_session_returns() {
+        return new external_value(PARAM_BOOL, 'attendance session deletion result');
     }
 
     /**
@@ -492,6 +499,8 @@ class mod_wsattendance_external extends external_api {
      * @param int $statusset
      */
     public static function update_user_status($sessionid, $studentid, $takenbyid, $statusid, $statusset) {
+        global $DB;
+
         $params = self::validate_parameters(self::update_user_status_parameters(), array(
             'sessionid' => $sessionid,
             'studentid' => $studentid,
@@ -500,11 +509,20 @@ class mod_wsattendance_external extends external_api {
             'statusset' => $statusset,
         ));
 
-        // Make sure session is open for marking.
         $session = $DB->get_record('attendance_sessions', array('id' => $params['sessionid']), '*', MUST_EXIST);
-        list($canmark, $reason) = attendance_can_student_mark($attforsession);
-        if (!$canmark) {
-            throw new invalid_parameter_exception($reason);
+        $cm = get_coursemodule_from_instance('attendance', $session->attendanceid, 0, false, MUST_EXIST);
+
+        // Check permissions.
+        $context = context_module::instance($cm->id);
+        self::validate_context($context);
+        require_capability('mod/attendance:view', $context);
+
+        // If not a teacher, make sure session is open for self-marking.
+        if (!has_capability('mod/attendance:takeattendances', $context)) {
+            list($canmark, $reason) = attendance_can_student_mark($session);
+            if (!$canmark) {
+                throw new invalid_parameter_exception($reason);
+            }
         }
 
         // Check user id is valid.
