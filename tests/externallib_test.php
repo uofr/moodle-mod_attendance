@@ -39,9 +39,10 @@ require_once($CFG->dirroot . '/mod/attendance/externallib.php');
  * @category   test
  * @copyright  2015 Caio Bressan Doneda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @group      mod_attendance
  */
 class mod_attendance_external_testcase extends externallib_advanced_testcase {
-    /** @var coursecat */
+    /** @var core_course_category */
     protected $category;
     /** @var stdClass */
     protected $course;
@@ -57,10 +58,14 @@ class mod_attendance_external_testcase extends externallib_advanced_testcase {
     /**
      * Setup class.
      */
-    public function setUp() {
+    public function setUp(): void {
+        global $DB;
         $this->category = $this->getDataGenerator()->create_category();
         $this->course = $this->getDataGenerator()->create_course(array('category' => $this->category->id));
-        $this->attendance = $this->getDataGenerator()->create_module('attendance', array('course' => $this->course->id));
+        $att = $this->getDataGenerator()->create_module('attendance', array('course' => $this->course->id));
+        $cm = $DB->get_record('course_modules', array('id' => $att->cmid), '*', MUST_EXIST);
+        $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+        $this->attendance = new mod_attendance_structure($att, $cm, $course);
 
         $this->create_and_enrol_users();
 
@@ -113,10 +118,14 @@ class mod_attendance_external_testcase extends externallib_advanced_testcase {
     }
 
     public function test_get_courses_with_today_sessions_multiple_instances() {
+        global $DB;
         $this->resetAfterTest(true);
 
         // Make another attendance.
-        $second = $this->getDataGenerator()->create_module('attendance', array('course' => $this->course->id));
+        $att = $this->getDataGenerator()->create_module('attendance', array('course' => $this->course->id));
+        $cm = $DB->get_record('course_modules', array('id' => $att->cmid), '*', MUST_EXIST);
+        $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+        $second = new mod_attendance_structure($att, $cm, $course);
 
         // Just add the same session.
         $secondsession = clone $this->sessions[0];
@@ -219,7 +228,8 @@ class mod_attendance_external_testcase extends externallib_advanced_testcase {
         $status = array_pop($sessioninfo['statuses']);
         $statusset = $sessioninfo['statusset'];
 
-        $result = mod_attendance_external::update_user_status($session['id'], $student['id'], $this->teacher->id, $status['id'], $statusset);
+        $result = mod_attendance_external::update_user_status($session['id'], $student['id'], $this->teacher->id,
+            $status['id'], $statusset);
         $result = external_api::clean_returnvalue(mod_attendance_external::update_user_status_returns(), $result);
 
         $sessioninfo = attendance_handler::get_session($session['id']);
@@ -317,7 +327,8 @@ class mod_attendance_external_testcase extends externallib_advanced_testcase {
 
         // Create attendance with separate groups mode.
         $attendancesepgroups = mod_attendance_external::add_attendance($course->id, 'sepgroups', 'test', SEPARATEGROUPS);
-        $attendancesepgroups = external_api::clean_returnvalue(mod_attendance_external::add_attendance_returns(), $attendancesepgroups);
+        $attendancesepgroups = external_api::clean_returnvalue(mod_attendance_external::add_attendance_returns(),
+                                                               $attendancesepgroups);
 
         // Check attendance exist.
         $this->assertCount(1, $DB->get_records('attendance', ['course' => $course->id]));
@@ -358,8 +369,10 @@ class mod_attendance_external_testcase extends externallib_advanced_testcase {
         $this->setUser($teacher);
 
         // Create attendance with no groups mode.
-        $attendancenogroups = mod_attendance_external::add_attendance($course->id, 'nogroups', 'test', NOGROUPS);
-        $attendancenogroups = external_api::clean_returnvalue(mod_attendance_external::add_attendance_returns(), $attendancenogroups);
+        $attendancenogroups = mod_attendance_external::add_attendance($course->id, 'nogroups',
+                                                                 'test', NOGROUPS);
+        $attendancenogroups = external_api::clean_returnvalue(mod_attendance_external::add_attendance_returns(),
+            $attendancenogroups);
 
         // Check attendance exist.
         $this->assertCount(1, $DB->get_records('attendance', ['course' => $course->id]));
@@ -384,7 +397,8 @@ class mod_attendance_external_testcase extends externallib_advanced_testcase {
 
         // Create attendance with visible groups mode.
         $attendancevisgroups = mod_attendance_external::add_attendance($course->id, 'visgroups', 'test', VISIBLEGROUPS);
-        $attendancevisgroups = external_api::clean_returnvalue(mod_attendance_external::add_attendance_returns(), $attendancevisgroups);
+        $attendancevisgroups = external_api::clean_returnvalue(mod_attendance_external::add_attendance_returns(),
+                                                               $attendancevisgroups);
 
         // Check attendance exist.
         $this->assertCount(1, $DB->get_records('attendance', ['course' => $course->id]));
