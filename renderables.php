@@ -583,11 +583,11 @@ class attendance_user_data implements renderable {
                 $parts = explode('sess', substr($key, 7));
                 $stid = $parts[0];
                 if (!(is_numeric($stid))) { // Sanity check on $stid.
-                    print_error('nonnumericid', 'attendance');
+                    throw new moodle_exception('nonnumericid', 'attendance');
                 }
                 $sessid = $parts[1];
                 if (!(is_numeric($sessid))) { // Sanity check on $sessid.
-                    print_error('nonnumericid', 'attendance');
+                    throw new moodle_exception('nonnumericid', 'attendance');
                 }
                 $dbsession = $this->sessionslog[$sessid];
 
@@ -724,7 +724,7 @@ class attendance_report_data implements renderable {
         $this->sessions = $att->get_filtered_sessions();
 
         $this->statuses = $att->get_statuses(true, true);
-        $this->allstatuses = $att->get_statuses(false, true);
+        $this->allstatuses = attendance_get_statuses($att->id, false);
 
         if ($att->pageparams->view == ATT_VIEW_SUMMARY) {
             $this->summary = new mod_attendance_summary($att->id);
