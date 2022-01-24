@@ -42,6 +42,8 @@ define('ATT_SORT_FIRSTNAME', 2);
 define('ATTENDANCE_AUTOMARK_DISABLED', 0);
 define('ATTENDANCE_AUTOMARK_ALL', 1);
 define('ATTENDANCE_AUTOMARK_CLOSE', 2);
+define('ATTENDANCE_AUTOMARK_ACTIVITYCOMPLETION', 3);
+
 
 define('ATTENDANCE_SHAREDIP_DISABLED', 0);
 define('ATTENDANCE_SHAREDIP_MINUTES', 1);
@@ -788,6 +790,12 @@ function attendance_construct_sessions_data_for_add($formdata, mod_attendance_st
                     }
                     $sess->automark = $formdata->automark;
                     $sess->automarkcompleted = 0;
+
+                    if (!empty($formdata->automarkcmid)) {
+                        $sess->automarkcmid = $formdata->automarkcmid;
+                    } else {
+                        $sess->automarkcmid = 0;
+                    }
                     if (!empty($formdata->preventsharedip)) {
                         $sess->preventsharedip = $formdata->preventsharedip;
                     }
@@ -839,7 +847,13 @@ function attendance_construct_sessions_data_for_add($formdata, mod_attendance_st
         }
     } else {
         $sess = new stdClass();
-        $sess->sessdate = $sessiondate;
+        $sess->sessdate = make_timestamp(
+            date("Y", $formdata->sessiondate),
+            date("m", $formdata->sessiondate),
+            date("d", $formdata->sessiondate),
+            $formdata->sestime['starthour'],
+            $formdata->sestime['startminute']
+        );
         $sess->duration = $duration;
         $sess->descriptionitemid = $formdata->sdescription['itemid'];
         $sess->description = $formdata->sdescription['text'];
@@ -852,6 +866,13 @@ function attendance_construct_sessions_data_for_add($formdata, mod_attendance_st
         $sess->studentpassword = '';
         $sess->automark = 0;
         $sess->automarkcompleted = 0;
+
+        if (!empty($formdata->automarkcmid)) {
+            $sess->automarkcmid = $formdata->automarkcmid;
+        } else {
+            $sess->automarkcmid = 0;
+        }
+
         $sess->absenteereport = $absenteereport;
         $sess->includeqrcode = 0;
         $sess->rotateqrcode = 0;
@@ -1010,9 +1031,9 @@ function attendance_get_users_to_notify($courseids = array(), $orderby = '', $al
         // Exclude warnings that have already sent the max num.
         $having .= ' AND n.maxwarn > COUNT(DISTINCT ns.id) ';
     }
-
-    $unames = get_all_user_name_fields(true).',';
-    $unames2 = get_all_user_name_fields(true, 'u').',';
+    $userfieldsapi = \core_user\fields::for_name();
+    $unames = $userfieldsapi->get_sql('', false, '', '', false)->selects.',';
+    $unames2 = $userfieldsapi->get_sql('u', false, '', '', false)->selects.',';
 
     if (!empty($CFG->showuseridentity)) {
         $extrafields = explode(',', $CFG->showuseridentity);
@@ -1089,7 +1110,7 @@ function attendance_template_variables($record) {
         '/%maxpoints%/' => $record->maxpoints,
         '/%percent%/' => $record->percent,
     );
-    $extrauserfields = get_all_user_name_fields();
+    $extrauserfields = \core_user\fields::get_name_fields();
     foreach ($extrauserfields as $extra) {
         $templatevars['/%'.$extra.'%/'] = $record->$extra;
     }
@@ -1150,13 +1171,40 @@ function attendance_session_get_highest_status(mod_attendance_structure $att, $a
  * @return array
  */
 function attendance_get_automarkoptions() {
+
     $options = array();
+
     $options[ATTENDANCE_AUTOMARK_DISABLED] = get_string('noautomark', 'attendance');
     if (strpos(get_config('tool_log', 'enabled_stores'), 'logstore_standard') !== false) {
         $options[ATTENDANCE_AUTOMARK_ALL] = get_string('automarkall', 'attendance');
     }
     $options[ATTENDANCE_AUTOMARK_CLOSE] = get_string('automarkclose', 'attendance');
+    $options[ATTENDANCE_AUTOMARK_ACTIVITYCOMPLETION] = get_string('onactivitycompletion', 'attendance');
+
     return $options;
+}
+
+/**
+ * Get course module names associated to this course, if they're visible and complete.
+ * @param int $id - course id.
+ * @return array $automarkcmoptions - list of course module names associated to this course.
+ */
+function attendance_get_coursemodulenames($id) {
+    $coursecontext = context_course::instance($id);
+    $modinfo = get_fast_modinfo($coursecontext->instanceid);
+    $automarkcmoptions = [];
+    foreach ($modinfo->get_instances() as $instances) {
+        foreach ($instances as $cm) {
+            if (!$cm->uservisible) {
+                continue;
+            }
+            if (empty($cm->completion)) {
+                continue;
+            }
+            $automarkcmoptions[$cm->id] = shorten_text($cm->get_formatted_name()). ' ';
+        }
+    }
+    return $automarkcmoptions;
 }
 
 /**

@@ -60,7 +60,9 @@ class export extends \moodleform {
         }
 
         // Restrict the export to the selected users.
-        $namefields = get_all_user_name_fields(true, 'u');
+        $userfieldsapi = \core_user\fields::for_name();
+        $namefields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+
         $allusers = get_enrolled_users($modcontext, 'mod/attendance:canbelisted', 0, 'u.id,'.$namefields);
         $userlist = array();
         foreach ($allusers as $user) {
@@ -111,7 +113,7 @@ class export extends \moodleform {
             $checkedfields['ident[id]'] = true;
         }
 
-        $extrafields = get_extra_user_fields($modcontext);
+        $extrafields = \core_user\fields::for_identity($modcontext)->get_required_fields();
         foreach ($extrafields as $field) {
             $ident[] =& $mform->createElement('checkbox',  $field, '', get_string( $field));
             $mform->setType($field, PARAM_NOTAGS);

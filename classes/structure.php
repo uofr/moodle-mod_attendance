@@ -534,6 +534,9 @@ class mod_attendance_structure {
             $sess->rotateqrcode = 0;
             $sess->rotateqrcodesecret = '';
         }
+        if (!isset($sess->automarkcmid)) {
+            $sess->automarkcmid = null;
+        }
         $event->add_record_snapshot('attendance_sessions', $sess);
         $event->trigger();
 
@@ -614,6 +617,10 @@ class mod_attendance_structure {
         }
         if (!empty($formdata->preventsharediptime)) {
             $sess->preventsharediptime = $formdata->preventsharediptime;
+        }
+
+        if (!empty($formdata->automarkcmid)) {
+            $sess->automarkcmid = $formdata->automarkcmid;
         }
 
         $sess->timemodified = time();
@@ -802,11 +809,8 @@ class mod_attendance_structure {
         global $DB;
 
         $fields = array('username' , 'idnumber' , 'institution' , 'department', 'city', 'country');
-        // Get user identity fields if required - doesn't return original $fields array.
-        $extrafields = get_extra_user_fields($this->context, $fields);
-        $fields = array_merge($fields, $extrafields);
-
-        $userfields = user_picture::fields('u', $fields);
+        $userf = \core_user\fields::for_identity($this->context, false)->with_userpic()->including(...$fields);
+        $userfields = $userf->get_sql('u', false, '', 'id', false)->selects;
 
         if (empty($this->pageparams->sort)) {
             $this->pageparams->sort = ATT_SORT_DEFAULT;
@@ -912,7 +916,7 @@ class mod_attendance_structure {
             'picture' => 0,
             'type' => 'temporary',
         );
-        $allfields = get_all_user_name_fields();
+        $allfields = \core_user\fields::get_name_fields();
         if (!empty($CFG->showuseridentity)) {
             $allfields = array_merge($allfields, explode(',', $CFG->showuseridentity));
         }
@@ -1305,9 +1309,16 @@ class mod_attendance_structure {
             }
         } else {
             foreach ($statuses as $status) {
-                if ($status->studentavailability !== '0' &&
-                    $this->sessioninfo[$sessionid]->sessdate + ($status->studentavailability * 60) > $time) {
-
+                if ($status->studentavailability === '0') {
+                    // This status not available to students.
+                    continue;
+                }
+                if (empty($status->studentavailability) && ($session->sessdate + $duration >= $time) &&
+                    !empty(get_config('attendance', 'automark_useempty'))) {
+                    // This is set to null - always available to students until end of session..
+                    return $status->id;
+                }
+                if ($this->sessioninfo[$sessionid]->sessdate + ($status->studentavailability * 60) > $time) {
                     // Found first status we could set.
                     return $status->id;
                 }
