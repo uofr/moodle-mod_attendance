@@ -15,18 +15,46 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Attendance module renderable component.
  *
  * @package    mod_attendance
+ * @copyright  2022 Dan Marsden
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace mod_attendance\output;
+
+use renderable;
+use moodle_url;
+
+/**
+ * Default status set
+ *
  * @copyright  2011 Artem Andreev <andreev.artem@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+class default_statusset implements renderable {
+    /** @var array  */
+    public $statuses;
+    /** @var array  */
+    public $errors;
 
-$plugin->version  = 2022062700;
-$plugin->requires = 2022031100; // Requires 4.0.
-$plugin->release = '4.0.3';
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->cron     = 0;
-$plugin->component = 'mod_attendance';
-$plugin->supported = [400, 400];
+    /**
+     * default_statusset constructor.
+     * @param array $statuses
+     * @param array $errors
+     */
+    public function __construct($statuses, $errors) {
+        $this->statuses = $statuses;
+        $this->errors = $errors;
+    }
+
+    /**
+     * url helper.
+     * @param array $params
+     * @return moodle_url
+     */
+    public function url($params) {
+        return new moodle_url('/mod/attendance/defaultstatus.php', $params);
+    }
+}
