@@ -736,7 +736,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
                                FROM {attendance_log}
                            GROUP BY sessionid, studentid, statusid)';
             $DB->execute($sql);
-        } else {
+        } else if (!empty($CFG->dbfamily) && $CFG->dbfamily == 'mysql') {
             // There is probably a faster way to do this for mysql, but it works.
             $sql = "SELECT id
                       FROM {attendance_log}
@@ -747,6 +747,14 @@ function xmldb_attendance_upgrade($oldversion=0) {
             foreach ($records as $record) {
                 $DB->delete_records('attendance_log', ['id' => $record->id]);
             }
+        } else if (!empty($CFG->dbfamily) && $CFG->dbfamily == 'mssql') {
+            $sql = "DELETE {attendance_log}
+                    WHERE id NOT IN (
+                        SELECT max(id)
+                        FROM {attendance_log}
+                        GROUP BY sessionid, studentid, statusid
+                        )";
+            $DB->execute($sql);
         }
 
         // Attendance savepoint reached.
