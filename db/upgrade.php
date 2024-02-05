@@ -815,11 +815,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
         $dbman->change_field_notnull($table, $field);
 
         // Attendance savepoint reached.
-<<<<<<< HEAD
-        upgrade_mod_savepoint(true, 2023020106, 'attendance');
-=======
         upgrade_mod_savepoint(true, 2023032800, 'attendance');
->>>>>>> 6aec1a59a954cbfd8960a9ce1d0da441ae379d43
     }
 
     return true;
