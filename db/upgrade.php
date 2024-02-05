@@ -640,8 +640,11 @@ function xmldb_attendance_upgrade($oldversion=0) {
 
     if ($oldversion < 2021050700) {
         // Restore process sometimes creates orphan attendance calendar events - clean them up.
-        $sql = "modulename = 'attendance' AND id NOT IN (SELECT caleventid
-                                                           FROM {attendance_sessions})";
+        $sql = "modulename = 'attendance' AND NOT EXISTS (
+                    SELECT 1
+                    FROM {attendance_sessions} a
+                    WHERE mdl_event.id = a.caleventid
+                )";
         $DB->delete_records_select('event', $sql);
 
         // Attendance savepoint reached.
@@ -729,10 +732,15 @@ function xmldb_attendance_upgrade($oldversion=0) {
     }
     if ($oldversion < 2022090900) {
         if (!empty($CFG->dbfamily) && $CFG->dbfamily == 'postgres') {
-            $sql = 'DELETE FROM {attendance_log}
-            WHERE id NOT IN (SELECT max(id)
-                               FROM {attendance_log}
-                           GROUP BY sessionid, studentid, statusid)';
+            $sql = 'DELETE FROM {attendance_log} a
+                        WHERE a.id NOT IN (
+                        SELECT MAX(id)
+                        FROM {attendance_log} b
+                        WHERE a.sessionid = b.sessionid
+                        AND a.studentid = b.studentid
+                        AND a.statusid = b.statusid
+                        GROUP BY b.sessionid, b.studentid, b.statusid
+                    )';
             $DB->execute($sql);
         } else if (!empty($CFG->dbfamily) && $CFG->dbfamily == 'mysql') {
             // There is probably a faster way to do this for mysql, but it works.
@@ -773,7 +781,11 @@ function xmldb_attendance_upgrade($oldversion=0) {
         upgrade_mod_savepoint(true, 2023020100, 'attendance');
     }
 
+<<<<<<< HEAD
     if ($oldversion < 2023020102) {
+=======
+    if ($oldversion < 2023021700) {
+>>>>>>> 6aec1a59a954cbfd8960a9ce1d0da441ae379d43
 
         // Define field studentavailability to be added to attendance_statuses.
         $table = new xmldb_table('attendance_sessions');
@@ -785,10 +797,10 @@ function xmldb_attendance_upgrade($oldversion=0) {
         }
 
         // Attendance savepoint reached.
-        upgrade_mod_savepoint(true, 2023020102, 'attendance');
+        upgrade_mod_savepoint(true, 2023021700, 'attendance');
     }
 
-    if ($oldversion < 2023020106) {
+    if ($oldversion < 2023032800) {
         // Update any records with null values and set to 0;
         $sql = 'UPDATE {attendance_sessions} set allowupdatestatus = 0 WHERE allowupdatestatus is null';
         $DB->execute($sql);
@@ -803,7 +815,11 @@ function xmldb_attendance_upgrade($oldversion=0) {
         $dbman->change_field_notnull($table, $field);
 
         // Attendance savepoint reached.
+<<<<<<< HEAD
         upgrade_mod_savepoint(true, 2023020106, 'attendance');
+=======
+        upgrade_mod_savepoint(true, 2023032800, 'attendance');
+>>>>>>> 6aec1a59a954cbfd8960a9ce1d0da441ae379d43
     }
 
     return true;
