@@ -19,7 +19,8 @@ declare(strict_types=1);
 namespace mod_attendance\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use core_reportbuilder\local\entities\course;;
+use core_reportbuilder\local\entities\course;
+use core_course\reportbuilder\local\entities\course_category;
 use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\helpers\database;
 
@@ -64,23 +65,20 @@ class attendance extends datasource {
         $userjoin = "JOIN {user} {$useralias} ON {$useralias}.id = {$attendancelogalias}.studentid";
         $this->add_entity($userentity->add_join($userjoin));
 
+        // Join the course entity.
         $coursentity = new course();
         $coursealias = $coursentity->get_table_alias('course');
         $coursejoin = "JOIN {course} {$coursealias} ON {$coursealias}.id = {$attendancealias}.course";
         $this->add_entity($coursentity->add_join($coursejoin));
 
-        $this->add_columns_from_entity($attendanceentity->get_entity_name());
-        $this->add_filters_from_entity($attendanceentity->get_entity_name());
-        $this->add_conditions_from_entity($attendanceentity->get_entity_name());
+        // Join the course category entity.
+        $coursecatentity = new course_category();
+        $coursecattablealias = $coursecatentity->get_table_alias('course_categories');
+        $this->add_entity($coursecatentity
+            ->add_join("JOIN {course_categories} {$coursecattablealias}
+                ON {$coursecattablealias}.id = {$coursealias}.category"));
 
-        $this->add_columns_from_entity($userentity->get_entity_name());
-        $this->add_filters_from_entity($userentity->get_entity_name());
-        $this->add_conditions_from_entity($userentity->get_entity_name());
-
-        $this->add_columns_from_entity($coursentity->get_entity_name());
-        $this->add_filters_from_entity($coursentity->get_entity_name());
-        $this->add_conditions_from_entity($coursentity->get_entity_name());
-
+        $this->add_all_from_entities();
     }
 
     /**
@@ -95,7 +93,7 @@ class attendance extends datasource {
                 'attendance:sessiondate',
                 'attendance:timetaken',
                 'attendance:status',
-                'attendance:grade'];
+                'attendance:grade', ];
     }
 
     /**
